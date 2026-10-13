@@ -1,35 +1,35 @@
 # jwt-auth-hardened
 
-auth api pake jwt, bcrypt, rate limit. 1 file `server.js`
+JWT auth API with bcrypt and rate limiting. Single file: `server.js`.
 
 ```
 npm install
 npm start
 ```
 
-port 4000
+Port 4000.
 
-## bagiannya
+## Parts
 
-**bcrypt cost 12** — hash password, lama banget kalo dibrute force
+**bcrypt cost 12** — password hashing, slow enough to make brute force painful
 
-**password rule** — min 8 karakter, ada huruf besar, kecil, angka
+**Password rules** — min 8 chars, needs upper, lower, and a digit
 
-**jwt 15 menit** — token cepet expired, ada refresh buat minta baru
+**JWT, 15 min** — short-lived access token, refresh token to get a new one
 
-**refresh di cookie** — `httpOnly` + `sameSite strict`, javascript gak bisa baca
+**Refresh in cookie** — `httpOnly` + `sameSite strict`, unreachable from JS
 
-**refresh sekali pake** — abis dipake langsung dihapus, diganti yang baru
+**Single-use refresh** — deleted and reissued on every use, so a stolen token gets invalidated by the real one
 
-**rate limit** — login 5x per 15 menit, sisanya 429
+**Rate limit** — 5 login attempts per 15 min, 429 after that. Everything else 60/min
 
-**pesan error disamain** — username salah sama password salah pesannya sama, plus bcrypt tetep jalan walaupun usernya gak ada biar waktunya mirip
+**Matching errors** — wrong username and wrong password return the same message, and bcrypt still runs when the user doesn't exist so the timing lines up
 
-**body limit 10kb** — biar gak ada yang kirim data gede
+**Body limit 10kb** — caps payload size
 
-**helmet** — security header otomatis
+**helmet** — security headers
 
-## tes
+## Test
 
 ```bash
 curl -X POST http://localhost:4000/daftar -H "Content-Type: application/json" -d "{\"username\":\"budi\",\"password\":\"Rahasia123\"}"
@@ -43,12 +43,12 @@ curl -X POST http://localhost:4000/masuk -H "Content-Type: application/json" -d 
 curl http://localhost:4000/aku -H "Authorization: Bearer <token>"
 ```
 
-login gagal 5x, coba ke-6 langsung 429
+Fail login 5 times, the 6th returns 429.
 
-## todo
+## Todo
 
-- data di array, restart hilang
-- refresh token juga di memori
-- belum ada verifikasi email
-- belum ada 2fa
-- belum ada scan dependency
+- users in a plain array, lost on restart
+- refresh tokens in memory too
+- no email verification
+- no 2FA
+- no dependency scanning in CI
